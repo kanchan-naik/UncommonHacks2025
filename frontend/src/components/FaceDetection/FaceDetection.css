@@ -1,0 +1,17 @@
+#webcam {
+  display: inline;
+  grid-area: 2 / 2 / 8 / 12;
+  overflow-y: hidden;
+  position: relative;
+}
+
+#webcam video {
+  width: 100%;
+}
+
+#webcam #controls {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
