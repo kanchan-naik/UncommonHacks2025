@@ -45,6 +45,9 @@ test/data/legacy_serialized.pt
 # Ignore node_modules
 node_modules/
 
+# Ignore images in local storage
+backend/img/
+
 
 #Ignore Wandb
 wandb/
