@@ -1,0 +1,10 @@
+.colorSwatch {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+}
+
+.sephora.foundation.red {
+  background-color: red;
+}
