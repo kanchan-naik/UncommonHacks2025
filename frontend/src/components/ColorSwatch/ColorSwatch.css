@@ -1,7 +1,7 @@
 .colorSwatch {
   display: inline-block;
-  width: 80px;
-  height: 80px;
+  grid-area: 1 / 2;
+  aspect-ratio: 1;
   border-radius: 9999px;
 }
 
