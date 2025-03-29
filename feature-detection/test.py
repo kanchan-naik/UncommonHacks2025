@@ -5,12 +5,15 @@ import detect
 import os
 
 # load image
-os.mkdir("feature-detection/test/", exist_ok=True)
-os.chdir("feature-detection/test/")
-os.mkdir("gabor/", exist_ok=True)
-os.mkdir("lbp/", exist_ok=True)
-os.mkdir("canny/", exist_ok=True)
+os.chdir("feature-detection/")
 image = cv2.imread("image.png")
+
+os.makedirs("test/", exist_ok=True)
+os.chdir("test/")
+
+os.makedirs("gabor/", exist_ok=True)
+os.makedirs("lbp/", exist_ok=True)
+os.makedirs("canny/", exist_ok=True)
 
 skin_mask = detect.get_skin_mask(image)
 skin_region = detect.get_skin_region(image, skin_mask)
