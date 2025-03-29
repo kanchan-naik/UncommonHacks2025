@@ -1,0 +1,22 @@
+#main-page {
+  width: 100vw;
+  height: 100vh;
+  background-color: #161616;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 20px;
+  padding: 5px 20px;
+}
+
+#light-row-1 {
+  grid-area: 2 / 1 / 8 / 2;
+}
+
+#light-row-2 {
+  grid-area: 1 / 2 / 2 / 12;
+}
+
+#light-row-3 {
+  grid-area: 2 / 12 / 8 / 13;
+}
