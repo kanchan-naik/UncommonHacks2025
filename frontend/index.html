@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Detection via Webcam</title>
+</head>
+<body>
+  <h1>Webcam Face Detection</h1>
+  <video id="webcam" width="640" height="480" autoplay muted></video>
+  <canvas id="canvas" width="640" height="480" style="position: absolute;"></canvas>
+  <button id="capture">Capture</button>
+
+  <script>
+    // Access webcam stream
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('capture');
+
+    // Initialize webcam feed
+    async function setupWebcam() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    // Capture the image from the webcam
+    captureButton.addEventListener('click', async () => {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/jpeg'); // Get base64 image URL
+      await detectFace(imageData);
+    });
+
+    // Send captured image data to backend for face detection
+    async function detectFace(imageData) {
+      const response = await fetch('http://localhost:5000/detect-face', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl: imageData }),
+      });
+
+      const data = await response.json();
+      console.log('Face detection result:', data);
+    }
+
+    // Initialize webcam
+    setupWebcam();
+  </script>
+</body>
+</html>
