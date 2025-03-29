@@ -19,7 +19,7 @@ export default function LightRow({ id, count, direction }) {
       }}
       id={id}
     >
-      {Array.from({ length: count }).map((i) => {
+      {Array.from({ length: count }).map((_, i) => {
         return <ColorSwatch key={i} product={light} />;
       })}
     </div>
