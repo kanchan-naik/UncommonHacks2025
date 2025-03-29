@@ -25,7 +25,7 @@ function FaceDetection() {
   // Send image data to backend for face detection
   const detectFace = async (imageData) => {
     try {
-      const response = await fetch('http://localhost:5000/detect-face', {
+      const response = await fetch('http://localhost:4000/detect-face', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
