@@ -1,5 +1,5 @@
 // src/FaceDetection.js
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./FaceDetection.css";
 
 function FaceDetection() {
@@ -14,16 +14,24 @@ function FaceDetection() {
   }); // Example color
   const [opacity, setOpacity] = useState(0.5); // Example opacity
 
+  useEffect(() => {
+    const setupWebcam = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
+    };
+
+    setupWebcam();
+  });
   // Start the webcam
-  const setupWebcam = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    videoRef.current.srcObject = stream;
-  };
 
   // Capture an image from the webcam and store it locally
   const captureImage = async () => {
+    const videoRect = videoRef.current.getBoundingClientRect();
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+    canvas.width = videoRect.width;
+    canvas.height = videoRect.height;
+
     context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
     const imageData = canvas.toDataURL("image/jpeg");
@@ -106,32 +114,25 @@ function FaceDetection() {
   };
 
   return (
-    <div id="webcam">
+    <div
+      id="webcam"
+      style={{
+        display: "flex",
+        gap: "20px",
+      }}
+    >
       <video ref={videoRef} autoPlay muted></video>
-      <canvas
-        ref={canvasRef}
-        width="640"
-        height="480"
-        style={{ display: "none" }}
-      ></canvas>
+      <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
       <div id="controls">
         <button onClick={captureImage}>Capture</button>
-        {detectionResult && (
-          <pre>{JSON.stringify(detectionResult, null, 2)}</pre>
-        )}
-        <button onClick={setupWebcam}>Start Webcam</button>
       </div>
 
-      {/* Display the processed image after applying foundation */}
       {detectionResult?.imageUrl && (
-        <div>
-          <h2>Processed Image with Foundation</h2>
-          <img
-            src={detectionResult.imageUrl}
-            alt="Processed Face"
-            width="640"
-          />
-        </div>
+        <img
+          id="processed-face"
+          src={detectionResult.imageUrl}
+          alt="Processed Face"
+        />
       )}
     </div>
   );
