@@ -64,12 +64,18 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
   };
 
   return (
-    <div id="colorPalette" ref={paletteRef}>
+    <div
+      id="colorPalette"
+      style={{
+        backgroundImage: "/foundation_palette.png",
+      }}
+      ref={paletteRef}
+    >
       <img
         style={{
           position: "absolute",
-          top: "-5px",
-          left: "-5px",
+          top: "-10px",
+          left: "-10px",
           width: "50px",
           aspectRatio: "1",
         }}
@@ -87,7 +93,15 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
           justifyContent: "space-around",
         }}
       >
-        <div id="currentSwatch"></div>
+        {hoverColor !== "transparent" && (
+          <div
+            id="currentSwatch"
+            style={{
+              backgroundColor: hoverColor,
+              border: "3px solid black",
+            }}
+          ></div>
+        )}
         <div id="closeButton"></div>
       </div>
       <canvas

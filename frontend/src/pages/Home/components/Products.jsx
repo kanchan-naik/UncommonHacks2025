@@ -7,18 +7,47 @@ import ColorPalette, {
 import { MakeupRequest } from "../Home";
 
 const products = [
-  new Product("/lipstick_with_cap.png", "lipstick"),
-  new Product("/brush.png", "makeup brush"),
-  new Product("/foundation.png", "liquid foundation container"),
+  new Product("/lipstick_with_cap.png", "lipstick", "lipstick"),
+  new Product("/brush.png", "makeup brush", "eyeliner"),
+  new Product("/foundation.png", "liquid foundation container", "foundation"),
 ];
+
+const defaultRequest = {
+  foundation: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+  lipstick: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+  eyeliner: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+};
 
 export default function Products({ onSubmit }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
+  const [makeupRequest, setMakeupRequest] = useState(defaultRequest);
+  const [selectedColor, setSelectedColor] = useState();
 
   const colorChanged = (newColor) => {
-    setSelectedColor(newColor);
-    onSubmit(new MakeupRequest(selectedProduct, newColor));
+    if (!selectedProduct) return;
+    let newRequest = makeupRequest;
+
+    newRequest[selectedProduct.title].present = 1;
+    newRequest[selectedProduct.title].r = newColor.r;
+    newRequest[selectedProduct.title].g = newColor.g;
+    newRequest[selectedProduct.title].b = newColor.b;
+    setMakeupRequest(newRequest);
+    onSubmit(newRequest);
   };
 
   const selectProduct = (product) => {

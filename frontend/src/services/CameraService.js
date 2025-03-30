@@ -1,29 +1,27 @@
 export default class CameraService {
   static async applyMakeup(imageData, makeupRequest) {
-    const imageId = await CameraService.saveImage(imageData);
+    const imageId = await CameraService.saveImage(imageData, makeupRequest);
     console.log("Saved image with imageId:", imageId);
 
     const detectionData = await CameraService.detectFace(imageData, imageId);
 
     if ((detectionData?.faces?.length ?? 0) > 0) {
-      return await CameraService.applyFoundation(
-        detectionData,
-        makeupRequest.color,
-        makeupRequest.opacity,
-      );
+      return await CameraService.addMakeupToFace(detectionData, makeupRequest);
     }
   }
 
-  static async saveImage(imageData) {
+  static async saveImage(imageData, makeupRequest) {
     const response = await fetch("http://localhost:3000/save-image", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ imageData }),
+      body: JSON.stringify({ imageData, makeupRequest }),
     });
 
-    const file = new Blob([JSON.stringify(imageData)], { type: "text/plain" });
+    const file = new Blob([JSON.stringify({ imageData })], {
+      type: "text/plain",
+    });
 
     const { imageId } = await response.json();
     if (!imageId) {

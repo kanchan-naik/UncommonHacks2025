@@ -6,10 +6,10 @@ import Products from "./components/Products";
 import "./Home.css";
 
 export class MakeupRequest {
-  constructor(product, color) {
-    this.product = product;
-    this.color = color;
-    this.opacity = 0.5;
+  constructor(foundation, eyeliner, lipstick) {
+    this.foundation = foundation;
+    this.eyeliner = eyeliner;
+    this.lipstick = lipstick;
   }
 }
 
