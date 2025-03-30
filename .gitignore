@@ -50,3 +50,5 @@ backend/img/
 
 #Ignore Wandb
 wandb/
+
+feature-detection/Data/*
