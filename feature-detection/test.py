@@ -37,7 +37,8 @@ def load_image(image_path):
 
 # ----------------- Parse CLI Arguments -----------------
 def parse_args():
-    if len(sys.argv) != 12:  # Update to 12 parameters
+    print("args", sys.argv)
+    if len(sys.argv) < 11:  # Update to 11 parameters
         print(
             "❌ Usage: python3 test.py <image_path> <foundation_present> <foundation_color> "
             "<lipstick_present> <lipstick_color> <eyeshadow_present> <eyeshadow_color> "

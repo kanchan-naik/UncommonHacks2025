@@ -37,7 +37,23 @@ def load_image(image_path):
 
 # ----------------- Parse CLI Arguments -----------------
 def parse_args():
-    if len(sys.argv) != 12:  # Update to 12 parameters
+    print("args", sys.argv)
+    # Original args list
+    args = ['/Users/kanchannaik/2024-2025/UncommonHacks2025/UncommonHacks2025/haskell-app/app/test.py', 'app/curr.png ', '1 e69139 1 aa0000 1 00b8d4 1 ff4343 1 f6b26c ']
+
+    # Get the last string in args, which contains the sequence of numbers and color codes
+    last_string = args[-1].strip()  # Remove any extra spaces
+
+    # Split the string into individual components by spaces
+    components = last_string.split()
+
+    # Now extend the args list by adding each component separately
+    args[-1:] = components  # This replaces the last element with individual components
+
+    # Print the updated args to verify
+    print("updated args", args)
+
+    if len(args) < 11:  # Update to 11 parameters
         print(
             "❌ Usage: python3 test.py <image_path> <foundation_present> <foundation_color> "
             "<lipstick_present> <lipstick_color> <eyeshadow_present> <eyeshadow_color> "
@@ -45,18 +61,20 @@ def parse_args():
         )
         exit()
 
-    image_path = sys.argv[1]
-    foundation_present = int(sys.argv[2])
-    foundation_color = sys.argv[3]
-    lipstick_present = int(sys.argv[4])
-    lipstick_color = sys.argv[5]
-    eyeshadow_present = int(sys.argv[6])
-    eyeshadow_color = sys.argv[7]
-    blush_present = int(sys.argv[8])
-    blush_color = sys.argv[9]
-    concealer_present = int(sys.argv[10])
-    concealer_color = sys.argv[11]
+    # Extract arguments from the list `args`
+    image_path = args[1]
+    foundation_present = int(args[2])
+    foundation_color = args[3]
+    lipstick_present = int(args[4])
+    lipstick_color = args[5]
+    eyeshadow_present = int(args[6])
+    eyeshadow_color = args[7]
+    blush_present = int(args[8])
+    blush_color = args[9]
+    concealer_present = int(args[10])
+    concealer_color = args[11]
 
+    # Return the parsed values
     return (
         image_path,
         foundation_present,

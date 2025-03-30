@@ -1,4 +1,4 @@
-export default class CameraService {
+export default class  CameraService {
   static async applyMakeup(imageData, makeupRequest) {
     const imageId = await CameraService.saveImage(imageData, makeupRequest);
     console.log("Saved image with imageId:", imageId);
@@ -30,7 +30,7 @@ export default class CameraService {
       mode: "no-cors",
     });
 
-    const { imageId } = await response.json();
+    const imageId = await response.text();
     if (!imageId) {
       throw new Error("No imageId returned!");
     }

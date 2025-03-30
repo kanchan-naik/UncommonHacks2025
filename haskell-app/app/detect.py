@@ -70,7 +70,7 @@ def get_skin_mask(image):
 def get_face_landmarks(image):
     # Load pre-trained face detector and landmark predictor
     detector = dlib.get_frontal_face_detector()
-    predictor_path = "shape_predictor_68_face_landmarks.dat"  # Download this model!
+    predictor_path = "app/shape_predictor_68_face_landmarks.dat"  # Download this model!
     predictor = dlib.shape_predictor(predictor_path)
 
     # Convert image to grayscale

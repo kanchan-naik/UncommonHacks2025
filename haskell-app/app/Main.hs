@@ -25,14 +25,14 @@ instance Show MakeupParam where
 data MakeupRequest = MakeupRequest {
   foundation :: MakeupParam,
   lipstick   :: MakeupParam,
-  eyeliner   :: MakeupParam
-  -- blush      :: MakeupParam,
-  -- concealer  :: MakeupParam
+  eyeshadow   :: MakeupParam,
+  blush      :: MakeupParam,
+  concealer  :: MakeupParam
 } deriving (Data, Typeable)
 
 instance Show MakeupRequest where 
-  show mr = (show $ foundation mr) ++ (show $ lipstick mr) ++ (show $ eyeliner mr)
-    ++ show (MakeupParam 0 "l") ++ show (MakeupParam 0 "l")
+  show mr = (show $ foundation mr) ++ (show $ lipstick mr) ++ (show $ eyeshadow mr)
+    ++ (show $ blush mr) ++ (show $ concealer mr) 
 
 data Server = Server
 
@@ -49,9 +49,9 @@ postHomeR :: Handler TypedContent
 postHomeR = do
     cwd <- liftIO $ getCurrentDirectory
     _ <- liftIO $ putStrLn cwd
-    let scriptPath = "app/test.py"
-    let filePath = "app/curr.png"
-    let interpreter = "/home/bwaldman/UncommonHacks2025/.conda/bin/python "
+    let scriptPath = "/Users/kanchannaik/2024-2025/UncommonHacks2025/UncommonHacks2025/haskell-app/app/test.py"
+    let filePath = "app/curr.png "
+    let interpreter = "/Users/kanchannaik/miniconda3/bin/python3"
 
     -- get post request body
     (params, body) <- runRequestBody
@@ -64,13 +64,17 @@ postHomeR = do
 
     let json = decodeJSON (unpack $ snd $ head params) :: MakeupRequest
 
-    let args = words (filePath ++ " " ++ show json)
+    let args = [filePath, show json]
 
-    _ <- liftIO $ callProcess (interpreter ++ scriptPath) args
+    -- Call the Python script correctly
+    _ <- liftIO $ putStrLn (concat args)
+    _ <- liftIO $ callProcess interpreter (scriptPath : args)
 
-    pngData <- liftIO $ BL.readFile filePath
-    let mimeType = defaultMimeLookup $ pack filePath
+    let newfilePath = "test/final_makeup_result.png"
+    pngData <- liftIO $ BL.readFile newfilePath
+    let mimeType = defaultMimeLookup $ pack newfilePath
     sendResponse (mimeType, toContent pngData)
+
 
 main :: IO ()
 main = warp 3000 Server
