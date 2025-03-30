@@ -53,6 +53,9 @@ executables:
     - text
     - http-client
     - mime-types
+    - aeson
+    - directory
+    - wai-cors
 
 tests:
   haskell-app-test:

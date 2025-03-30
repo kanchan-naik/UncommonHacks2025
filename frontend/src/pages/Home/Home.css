@@ -1,10 +1,11 @@
 #main-page {
   width: 100vw;
   height: 100vh;
-  background-color: #161616;
+  background-image: url("./vanity_mirror.png");
+  background-size: cover;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-rows: repeat(7, 1fr);
   gap: 20px;
   padding: 5px 20px;
 }
@@ -31,4 +32,15 @@
 
 #light-row-3 {
   grid-area: 2 / 12 / 8 / 13;
+}
+
+#vanity-background {
+  position: fixed; /* or absolute */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  z-index: -9999; /* Ensure it's behind everything */
+  opacity: 1; /* Ensure it's fully visible */
 }
