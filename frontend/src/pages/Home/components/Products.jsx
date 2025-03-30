@@ -7,9 +7,26 @@ import ColorPalette, {
 import rgbHex from "rgb-hex";
 
 const products = [
-  new Product("/lipstick_with_cap.png", "lipstick", "lipstick"),
-  new Product("/brush.png", "makeup brush", "eyeliner"),
-  new Product("/foundation.png", "liquid foundation container", "foundation"),
+  new Product(
+    "/lipstick_with_cap.png",
+    "lipstick",
+    "lipstick",
+    PaletteType.LIPSTICK,
+  ),
+  new Product("/brush.png", "makeup brush", "eyeshadow", PaletteType.EYESHADOW),
+  new Product(
+    "/foundation.png",
+    "liquid foundation container",
+    "foundation",
+    PaletteType.FOUNDATION,
+  ),
+  new Product("/blush.png", "blush", "blush", PaletteType.BLUSH),
+  new Product(
+    "/concealer.png",
+    "concealer",
+    "concealer",
+    PaletteType.CONCEALER,
+  ),
 ];
 
 const defaultRequest = {
@@ -21,7 +38,15 @@ const defaultRequest = {
     present: 0,
     color: "#fff",
   },
-  eyeliner: {
+  eyeshadow: {
+    present: 0,
+    color: "#fff",
+  },
+  blush: {
+    present: 0,
+    color: "#fff",
+  },
+  concealer: {
     present: 0,
     color: "#fff",
   },
@@ -87,7 +112,7 @@ export default function Products({ onSubmit }) {
       {selectedProduct && (
         <>
           <ColorPalette
-            type={PaletteType.FOUNDATION}
+            type={selectedProduct.type}
             setSelectedColor={colorChanged}
             onClose={closePalette}
           />

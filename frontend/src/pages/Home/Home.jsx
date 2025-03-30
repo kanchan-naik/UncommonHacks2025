@@ -5,9 +5,9 @@ import Products from "./components/Products";
 import "./Home.css";
 
 export class MakeupRequest {
-  constructor(foundation, eyeliner, lipstick) {
+  constructor(foundation, eyeshadow, lipstick) {
     this.foundation = foundation;
-    this.eyeliner = eyeliner;
+    this.eyeshadow = eyeshadow;
     this.lipstick = lipstick;
   }
 }
