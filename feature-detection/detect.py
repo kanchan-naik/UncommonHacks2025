@@ -96,6 +96,57 @@ def final_mask(skin_mask, texture_map):
 
     return refined_mask
 
+def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5, extend_outer=7, extend_upper=8):
+    # Define indices for upper eyelid points
+    left_upper_lid = face_points[36:42]  # Upper part of left eye (landmarks 36-41)
+    right_upper_lid = face_points[42:48]  # Upper part of right eye (landmarks 42-47)
+
+    # Function to shift points upward for the arc and outward for the wing
+    def shift_points(points, shift_y=7, shift_x=0):
+        return [(x + shift_x, y - shift_y) for (x, y) in points]
+
+    # Apply upward shift to create a lifted arc
+    left_upper_lid_shifted = shift_points(left_upper_lid, shift_y=extend_upper, shift_x=-extend_outer)
+    right_upper_lid_shifted = shift_points(right_upper_lid, shift_y=extend_upper, shift_x=extend_outer)
+
+    # Extend outer corners to create a winged effect
+    left_outer_corner = (left_upper_lid[-1][0] + extend_outer, left_upper_lid[-1][1] - extend_upper // 2)
+    right_outer_corner = (right_upper_lid[0][0] - extend_outer, right_upper_lid[0][1] - extend_upper // 2)
+
+    # Add the extended points to the shifted eyelid points
+    left_upper_lid_shifted.append(left_outer_corner)
+    right_upper_lid_shifted.append(right_outer_corner)
+
+    # Create convex hull for smooth contour of the eyeshadow
+    left_shadow_hull = cv2.convexHull(np.array(left_upper_lid_shifted, dtype=np.int32))
+    right_shadow_hull = cv2.convexHull(np.array(right_upper_lid_shifted, dtype=np.int32))
+
+    # Create mask for eyeshadow
+    shadow_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
+    cv2.fillConvexPoly(shadow_mask, left_shadow_hull, 255)
+    cv2.fillConvexPoly(shadow_mask, right_shadow_hull, 255)
+
+    # Feather the shadow edges to make it blend smoothly
+    if feather_size > 0:
+        # Make feather_size odd if it's not
+        if feather_size % 2 == 0:
+            feather_size += 1
+        shadow_mask = cv2.GaussianBlur(shadow_mask, (feather_size, feather_size), 0)
+
+    # Create the shadow overlay
+    shadow_layer = np.full_like(image, shadow_color, dtype=np.uint8)
+    shadow_masked = cv2.bitwise_and(shadow_layer, shadow_layer, mask=shadow_mask)
+
+    # --- Blend the shadow with the original image using alpha ---
+    result = image.copy()
+    for c in range(3):  # Blend each channel separately (B, G, R)
+        result[:, :, c] = (
+            (shadow_masked[:, :, c] * (shadow_mask.astype(np.float32) / 255.0) * alpha)
+            + image[:, :, c] * (1 - (shadow_mask.astype(np.float32) / 255.0) * alpha)
+        ).astype(np.uint8)
+
+    return result
+
 # Function to draw face contour based on landmarks
 def draw_face_contour(image, face_points):
     # Add forehead points to the original face points
@@ -149,6 +200,7 @@ def apply_seamless_foundation(image, skin_mask, foundation_color, hull, alpha=0.
         ).astype(np.uint8)
 
     return result
+
 
 def add_forehead_points(face_points, forehead_scale=1.5):
     # Get eyebrow points (landmarks 17-26) to estimate forehead position

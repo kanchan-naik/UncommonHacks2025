@@ -73,4 +73,13 @@ plt.imsave(os.path.join(canny_dir, "edges.png"), edges, cmap="gray")
 plt.imsave(os.path.join(canny_dir, "texture_map.png"), texture_map, cmap="gray")
 plt.imsave(os.path.join(canny_dir, "final_skin_mask.png"), final_skin_mask, cmap="gray")
 
+# --- Apply eye shadow after foundation ---
+shadow_color = (0, 0, 255)  # Correct BGR for red
+shadow_opacity = 0.2  # Change for intensity
+feather_size = 2  # Feather edges smoothly
+
+# Apply eye shadow
+eye_shadow_overlay = detect.apply_eye_shadow(foundation_overlay, face_points, shadow_color, alpha=shadow_opacity)
+plt.imsave(os.path.join(test_dir, "eye_shadow_overlay.png"), cv2.cvtColor(eye_shadow_overlay, cv2.COLOR_BGR2RGB))
+
 print("✅ All images processed and saved successfully!")
