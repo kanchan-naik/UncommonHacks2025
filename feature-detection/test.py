@@ -18,7 +18,7 @@ os.makedirs(lbp_dir, exist_ok=True)
 os.makedirs(canny_dir, exist_ok=True)
 
 # Load image
-image_path = os.path.join(base_dir, "image.png")
+image_path = os.path.join(base_dir, "mirror11.jpg")
 image = cv2.imread(image_path)
 
 # Check if image is loaded successfully
@@ -48,8 +48,8 @@ if face_points:
 
     # --- Step 3: Apply foundation with adjustable opacity, excluding eyes ---
     foundation_color = (70, 130, 180)  # Foundation color in BGR
-    alpha_value = 0.2  # Adjust this value between 0 and 1 for desired opacity
-    foundation_overlay = detect.apply_seamless_foundation(image, skin_mask, foundation_color, hull, alpha=alpha_value, eye_mask=eye_mask)
+    alpha_value = 0.1  # Adjust this value between 0 and 1 for desired opacity
+    foundation_overlay = detect.apply_seamless_foundation(image, skin_mask, foundation_color, hull, alpha=alpha_value, eye_mask=eye_mask, face_points=face_points)
     plt.imsave(os.path.join(test_dir, "foundation_overlay2.png"), cv2.cvtColor(foundation_overlay, cv2.COLOR_BGR2RGB))
 
 # --- Step 4: Process and save Gabor textures ---
@@ -76,7 +76,7 @@ plt.imsave(os.path.join(canny_dir, "final_skin_mask.png"), final_skin_mask, cmap
 # --- Apply eye shadow after foundation ---
 shadow_color = (0, 0, 255)  # Correct BGR for red
 shadow_opacity = 0.2  # Change for intensity
-feather_size = 2  # Feather edges smoothly
+feather_size = 4  # Feather edges smoothly
 
 # Apply eye shadow
 eye_shadow_overlay = detect.apply_eye_shadow(foundation_overlay, face_points, shadow_color, alpha=shadow_opacity, eye_mask=eye_mask)
@@ -85,16 +85,15 @@ plt.imsave(os.path.join(test_dir, "eye_shadow_overlay.png"), cv2.cvtColor(eye_sh
 # --- Step 7: Apply lipstick with adjustable color and opacity ---
 lip_color = (120, 0, 120)  # Lipstick color in BGR (deep magenta as an example)
 lip_opacity = 0.5  # Adjust between 0 and 1 for opacity
-lipstick_overlay = detect.apply_lipstick(eye_shadow_overlay, face_points, lip_color, alpha=lip_opacity, feather_size=8)
+lipstick_overlay = detect.apply_lipstick(eye_shadow_overlay, face_points, lip_color, alpha=lip_opacity)
 plt.imsave(os.path.join(test_dir, "lipstick_overlay.png"), cv2.cvtColor(lipstick_overlay, cv2.COLOR_BGR2RGB))
 
 
 # --- Step 8: Apply blush to cheeks ---
 blush_color = (255, 102, 178)  # Pinkish blush color (BGR format)
 blush_opacity = 0.4  # Adjust opacity between 0 and 1
-feather_size = 40  # Feathering for smooth blending
 
-blush_overlay = detect.apply_blush(lipstick_overlay, face_points, blush_color, alpha=blush_opacity, feather_size=feather_size, eye_mask=eye_mask)
+blush_overlay = detect.apply_blush(lipstick_overlay, face_points, blush_color, alpha=blush_opacity, eye_mask=eye_mask)
 plt.imsave(os.path.join(test_dir, "blush_overlay.png"), cv2.cvtColor(blush_overlay, cv2.COLOR_BGR2RGB))
 
 print("✅ All images processed and saved successfully!")
@@ -102,9 +101,8 @@ print("✅ All images processed and saved successfully!")
 # --- Step 9: Apply highlighter to cheekbones, nose, and cupid's bow ---
 concealer_color = (255, 255, 255)  # Shimmery white highlighter
 concealer_opacity = 0.2  # Subtle glow effect, can adjust
-feather_size = 15  # Feather for smooth blending
 
 concealer_overlay = detect.apply_concealer(
-    blush_overlay, face_points, concealer_color, alpha=concealer_opacity, feather_size=feather_size, eye_mask=eye_mask
+    blush_overlay, face_points, concealer_color, alpha=concealer_opacity, eye_mask=eye_mask
 )
 plt.imsave(os.path.join(test_dir, "concealer_overlay.png"), cv2.cvtColor(concealer_overlay, cv2.COLOR_BGR2RGB))
