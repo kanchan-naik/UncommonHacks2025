@@ -250,3 +250,52 @@ def get_eye_contours(face_points):
 
     return left_eye_contour, right_eye_contour
 
+def get_lip_contours(face_points, lip_shift=-2):
+    # Define landmark points for the upper and lower lips
+    upper_lip_points = face_points[48:55] + [face_points[48]]  # Landmarks 48-54
+    lower_lip_points = face_points[54:61] + [face_points[54]]  # Landmarks 54-60
+
+    # Shift points slightly to adjust for thickness of lipstick
+    #def shift_points(points, shift_y=lip_shift):
+    #    return [(x, y + shift_y) for (x, y) in points]
+
+    # Apply slight downward shift for a fuller lip effect
+    #upper_lip_shifted = shift_points(upper_lip_points, shift_y=-lip_shift)
+    #lower_lip_shifted = shift_points(lower_lip_points, shift_y=lip_shift)
+
+    # Create convex hulls for upper and lower lips
+    upper_lip_hull = cv2.convexHull(np.array(upper_lip_points, dtype=np.int32))
+    lower_lip_hull = cv2.convexHull(np.array(lower_lip_points, dtype=np.int32))
+
+    return upper_lip_hull, lower_lip_hull
+
+def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=8):
+    # Get upper and lower lip contours
+    upper_lip_hull, lower_lip_hull = get_lip_contours(face_points)
+
+    # Create mask for the lips
+    lip_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
+    cv2.fillConvexPoly(lip_mask, upper_lip_hull, 255)
+    cv2.fillConvexPoly(lip_mask, lower_lip_hull, 255)
+
+    # Feather the lip mask to blend smoothly
+    if feather_size > 0:
+        if feather_size % 2 == 0:
+            feather_size += 1  # Ensure feather size is odd
+        lip_mask = cv2.GaussianBlur(lip_mask, (feather_size, feather_size), 0)
+
+    # Create lipstick overlay
+    lipstick_layer = np.full_like(image, lip_color, dtype=np.uint8)
+    lipstick_masked = cv2.bitwise_and(lipstick_layer, lipstick_layer, mask=lip_mask)
+
+    # Blend the lipstick with the original image using alpha and feathering
+    result = image.copy()
+    for c in range(3):  # Blend each channel separately (B, G, R)
+        result[:, :, c] = (
+            (lipstick_masked[:, :, c] * (lip_mask.astype(np.float32) / 255.0) * alpha)
+            + image[:, :, c] * (1 - (lip_mask.astype(np.float32) / 255.0) * alpha)
+        ).astype(np.uint8)
+
+    return result
+
+

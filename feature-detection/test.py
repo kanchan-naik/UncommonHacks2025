@@ -82,4 +82,11 @@ feather_size = 2  # Feather edges smoothly
 eye_shadow_overlay = detect.apply_eye_shadow(foundation_overlay, face_points, shadow_color, alpha=shadow_opacity)
 plt.imsave(os.path.join(test_dir, "eye_shadow_overlay.png"), cv2.cvtColor(eye_shadow_overlay, cv2.COLOR_BGR2RGB))
 
+# --- Step 7: Apply lipstick with adjustable color and opacity ---
+lip_color = (120, 0, 120)  # Lipstick color in BGR (deep magenta as an example)
+lip_opacity = 0.5  # Adjust between 0 and 1 for opacity
+lipstick_overlay = detect.apply_lipstick(eye_shadow_overlay, face_points, lip_color, alpha=lip_opacity, feather_size=8)
+plt.imsave(os.path.join(test_dir, "lipstick_overlay.png"), cv2.cvtColor(lipstick_overlay, cv2.COLOR_BGR2RGB))
+
+
 print("✅ All images processed and saved successfully!")
