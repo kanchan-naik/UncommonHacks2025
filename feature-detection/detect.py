@@ -4,6 +4,49 @@ import matplotlib.pyplot as plt
 from skimage.feature import local_binary_pattern
 from skimage.filters import gabor
 import dlib
+from scipy.spatial import distance as dist
+
+# Get face width (distance between left and right jawline points)
+def get_face_width(face_points):
+    return dist.euclidean(face_points[0], face_points[16])
+
+# Get eye width
+def get_eye_width(face_points, eye='left'):
+    if eye == 'left':
+        return dist.euclidean(face_points[36], face_points[39])
+    else:
+        return dist.euclidean(face_points[42], face_points[45])
+    
+def get_face_height(face_points):
+    """
+    Calculate the height of the face dynamically.
+    Height is measured from the midpoint between the eyebrows (landmark 27)
+    to the bottom of the chin (landmark 8).
+    """
+    # Landmark 27 is the midpoint between the eyebrows
+    brow_midpoint = face_points[27]
+
+    # Landmark 8 is the bottom of the chin
+    chin_point = face_points[8]
+
+    # Calculate Euclidean distance to determine face height
+    face_height = np.linalg.norm(np.array(brow_midpoint) - np.array(chin_point))
+    
+    return face_height
+
+# Get forehead height (distance between eyebrows and top of forehead)
+def get_forehead_height(face_points):
+    left_eyebrow_top = face_points[19]
+    right_eyebrow_top = face_points[24]
+    return dist.euclidean(left_eyebrow_top, right_eyebrow_top) / 2
+
+# Get lip width (distance between corners of lips)
+def get_lip_width(face_points):
+    return dist.euclidean(face_points[48], face_points[54])
+
+# Get cheek width (distance between cheeks)
+def get_cheek_width(face_points):
+    return dist.euclidean(face_points[2], face_points[14])
 
 # Get skin mask based on HSV range and refine it using morphological operations
 def get_skin_mask(image):
@@ -96,10 +139,23 @@ def final_mask(skin_mask, texture_map):
 
     return refined_mask
 
-def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5, extend_outer=7, extend_upper=8, eye_mask=None):
+def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=None, extend_outer=None, extend_upper=None, eye_mask=None):
     # Define indices for upper eyelid points
     left_upper_lid = face_points[36:42]  # Upper part of left eye (landmarks 36-41)
     right_upper_lid = face_points[42:48]  # Upper part of right eye (landmarks 42-47)
+
+     # --- Dynamically calculate eye width and height ---
+    eye_width = np.linalg.norm(np.array(face_points[39]) - np.array(face_points[36]))  # Left eye width
+    eye_height = np.linalg.norm(np.array(face_points[37]) - np.array(face_points[41]))  # Left eye height
+
+    # --- Scale feather size, extend_outer, and extend_upper dynamically ---
+    if feather_size is None:
+        feather_size = max(5, int(0.50 * eye_width))  # Feather 5% of eye width
+
+    if extend_outer is None:
+        extend_outer = int(0.5 * eye_width)  # Extend outer wing by 20% of eye width
+    if extend_upper is None:
+        extend_upper = int(1.5 * eye_height)  # Extend upper height by 50% of eye height
 
     # Function to shift points upward for the arc and outward for the wing
     def shift_points(points, shift_y=7, shift_x=0):
@@ -109,9 +165,15 @@ def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5
     left_upper_lid_shifted = shift_points(left_upper_lid, shift_y=extend_upper, shift_x=-extend_outer)
     right_upper_lid_shifted = shift_points(right_upper_lid, shift_y=extend_upper, shift_x=extend_outer)
 
-    # Extend outer corners to create a winged effect
-    left_outer_corner = (left_upper_lid[-1][0] + extend_outer, left_upper_lid[-1][1] - extend_upper // 2)
-    right_outer_corner = (right_upper_lid[0][0] - extend_outer, right_upper_lid[0][1] - extend_upper // 2)
+    # Extend outer corners for wing effect
+    left_outer_corner = (
+        left_upper_lid[-1][0] + extend_outer,
+        left_upper_lid[-1][1] - extend_upper // 3,
+    )
+    right_outer_corner = (
+        right_upper_lid[0][0] - extend_outer,
+        right_upper_lid[0][1] - extend_upper // 3,
+    )
 
     # Add the extended points to the shifted eyelid points
     left_upper_lid_shifted.append(left_outer_corner)
@@ -166,34 +228,43 @@ def draw_face_contour(image, face_points):
 
     return contour_overlay, hull
 
-def apply_seamless_foundation(image, skin_mask, foundation_color, hull, alpha=0.4, eye_mask=None, feather_size=8):
-    # Create a foundation-colored overlay
+def apply_seamless_foundation(
+    image, skin_mask, foundation_color, hull, alpha=0.4, eye_mask=None, 
+    feather_size=None, face_points=None
+):
+    # --- Dynamically adjust feather size based on face width ---
+    if face_points is not None and feather_size is None:
+        face_width = get_face_width(face_points)
+        feather_size = max(5, int(0.02 * face_width))  # Feather size as 2% of face width
+    
+    # Ensure feather_size is valid and odd (required for GaussianBlur)
+    feather_size = max(1, int(feather_size))
+    if feather_size % 2 == 0:
+        feather_size += 1  # Make feather_size odd for GaussianBlur
+
+    # --- Create a foundation-colored overlay ---
     foundation_layer = np.full_like(image, foundation_color, dtype=np.uint8)
 
     # Create a mask of the convex hull to restrict where the foundation is applied
     hull_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
     cv2.fillConvexPoly(hull_mask, hull, 255)
 
-    # --- Feather edges softly without expanding the mask ---
-    feather_size = max(1, int(feather_size))  # Ensure feather_size is valid
-    if feather_size % 2 == 0:
-        feather_size += 1  # Make feather_size odd
+    # --- Erode the mask slightly to avoid expanding the size ---
+    erosion_size = max(1, feather_size // 6)  # Erode by a fraction of feather size
+    hull_mask_eroded = cv2.erode(hull_mask, np.ones((erosion_size, erosion_size), np.uint8), iterations=1)
 
-    # Erode the mask slightly to avoid expanding the size
-    hull_mask_eroded = cv2.erode(hull_mask, np.ones((3, 3), np.uint8), iterations=1)
-
-    # Apply Gaussian blur to create a smooth transition on the edges
+    # --- Feather the edges using Gaussian blur ---
     hull_mask_blurred = cv2.GaussianBlur(hull_mask_eroded, (feather_size, feather_size), 0)
 
-    # Normalize to keep alpha blending between 0 and 1
+    # Normalize feather mask for blending
     feather_mask = hull_mask_blurred.astype(np.float32) / 255.0
-    feather_mask = np.expand_dims(feather_mask, axis=-1)  # Expand to 3 channels for blending
+    feather_mask = np.expand_dims(feather_mask, axis=-1)  # Add channel for blending
 
-    # If an eye mask is provided, subtract the eye regions from the mask
+    # --- If eye mask is provided, subtract eye regions from the mask ---
     if eye_mask is not None:
         hull_mask = cv2.subtract(hull_mask, eye_mask)
 
-    # Apply foundation where the hull mask is valid
+    # --- Apply foundation only where the hull mask is valid ---
     foundation_masked = cv2.bitwise_and(foundation_layer, foundation_layer, mask=hull_mask)
 
     # --- Blend the foundation with the original image using alpha and feathered mask ---
@@ -234,13 +305,34 @@ def add_forehead_points(face_points, forehead_scale=1.5):
     extended_face_points = np.vstack([face_points, np.array(forehead_points, dtype=np.int32)])
     return extended_face_points
 
-def create_eye_mask(image, left_eye_contour, right_eye_contour):
+def create_eye_mask(image, left_eye_contour, right_eye_contour, feather_size = None):
     # Create an empty mask the same size as the image
     eye_mask = np.zeros(image.shape[:2], dtype=np.uint8)
 
     # Draw filled contours to mask the eye regions
     cv2.fillPoly(eye_mask, [left_eye_contour], 255)
     cv2.fillPoly(eye_mask, [right_eye_contour], 255)
+
+     # --- Dynamically calculate feather_size based on eye width ---
+    if feather_size is None:
+        # Estimate eye width as the distance between outer eye corners
+        eye_width = np.linalg.norm(np.array(left_eye_contour[3]) - np.array(left_eye_contour[0]))
+        
+        # Set feather size as ~5% of eye width, ensuring it's at least 5 pixels
+        feather_size = max(5, int(0.08 * eye_width))
+
+    # --- Smooth the eye mask by dilating and blurring ---
+    if feather_size > 0:
+        # Make feather size odd if necessary
+        if feather_size % 2 == 0:
+            feather_size += 1
+
+        dilation_size = max(3, int(0.07 * eye_width))
+        dilation_kernel = np.ones((dilation_size, dilation_size), np.uint8)
+
+        # Slightly dilate before blurring to prevent shrinking the mask
+        eye_mask = cv2.dilate(eye_mask, dilation_kernel, iterations=1)
+        eye_mask = cv2.GaussianBlur(eye_mask, (feather_size, feather_size), 0)
 
     return eye_mask
 
@@ -274,7 +366,7 @@ def get_lip_contours(face_points, lip_shift=-2):
 
     return upper_lip_hull, lower_lip_hull
 
-def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=8):
+def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=None):
     # Get upper and lower lip contours
     upper_lip_hull, lower_lip_hull = get_lip_contours(face_points)
 
@@ -283,17 +375,36 @@ def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=8):
     cv2.fillConvexPoly(lip_mask, upper_lip_hull, 255)
     cv2.fillConvexPoly(lip_mask, lower_lip_hull, 255)
 
-    # Feather the lip mask to blend smoothly
+    # --- Dynamically calculate feather_size based on lip width ---
+    # Calculate lip width as the distance between the corners of the mouth
+    lip_width = np.linalg.norm(np.array(face_points[54]) - np.array(face_points[48]))
+
+    # Set feather size as 5% of lip width, ensuring it's at least 5 pixels
+    if feather_size is None:
+        feather_size = max(5, int(0.25 * lip_width))
+
+    # --- Dynamically calculate dilation size ---
+    # Set dilation size as 3% of lip width, ensuring at least 3 pixels
+    dilation_size = max(2, int(0.01 * lip_width))
+    dilation_kernel = np.ones((dilation_size, dilation_size), np.uint8)
+
+    # --- Improve mask smoothness with dilation and feathering ---
     if feather_size > 0:
+        # Ensure feather_size is odd for Gaussian blur
         if feather_size % 2 == 0:
-            feather_size += 1  # Ensure feather size is odd
+            feather_size += 1
+
+        # Dilate the mask slightly to smooth sharp edges
+        lip_mask = cv2.dilate(lip_mask, dilation_kernel, iterations=1)
+
+        # Feather the mask with Gaussian blur
         lip_mask = cv2.GaussianBlur(lip_mask, (feather_size, feather_size), 0)
 
     # Create lipstick overlay
     lipstick_layer = np.full_like(image, lip_color, dtype=np.uint8)
     lipstick_masked = cv2.bitwise_and(lipstick_layer, lipstick_layer, mask=lip_mask)
 
-    # Blend the lipstick with the original image using alpha and feathering
+    # --- Blend the lipstick with the original image using alpha ---
     result = image.copy()
     for c in range(3):  # Blend each channel separately (B, G, R)
         result[:, :, c] = (
@@ -303,7 +414,15 @@ def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=8):
 
     return result
 
-def apply_blush(image, face_points, blush_color=(255, 102, 178), alpha=0.3, feather_size=15, eye_mask=None):
+
+def apply_blush(image, face_points, blush_color=(255, 102, 178), alpha=0.3, feather_size=None, eye_mask=None):
+    # --- Dynamically calculate face width ---
+    face_width = get_face_width(face_points)
+
+    # Set feather size dynamically based on face width (6% of face width)
+    if feather_size is None:
+        feather_size = max(5, int(0.4 * face_width))  # At least 5 pixels to ensure smooth blending
+    
     # Get cheekbone landmarks for defining the curve
     left_cheekbone_start = face_points[1]  # Near top of the ear
     left_cheekbone_mid = face_points[3]  # Mid cheek for curve
@@ -338,7 +457,7 @@ def apply_blush(image, face_points, blush_color=(255, 102, 178), alpha=0.3, feat
     cv2.fillPoly(blush_mask, [left_blush_curve], 255)
     cv2.fillPoly(blush_mask, [right_blush_curve], 255)
 
-    # Feather the blush mask for smooth blending
+    # --- Feather the blush mask for smooth blending ---
     if feather_size > 0:
         if feather_size % 2 == 0:
             feather_size += 1  # Ensure feather size is odd
@@ -361,66 +480,70 @@ def apply_blush(image, face_points, blush_color=(255, 102, 178), alpha=0.3, feat
     return result
 
 def apply_concealer(
-    image, face_points, concealer_color=(255, 255, 255), alpha=0.5, feather_size=15, eye_mask = None
+    image, face_points, concealer_color=(255, 255, 255), alpha=0.5, feather_size=None, extend_outer=None, extend_lower=None, eye_mask=None
 ):
-    # Get points for cheekbone concealer and extend upward
-    left_cheekbone_concealer = [
-        (face_points[2][0], face_points[2][1] - 27),  # Higher outer cheek
-        face_points[29],  # Slightly lower nose bridge for narrow curve
-        (face_points[3][0], face_points[3][1] - 25),  # Mid cheek near nose
-    ]
-    right_cheekbone_concealer = [
-        (face_points[14][0], face_points[14][1] - 27),  # Higher outer cheek
-        face_points[29],  # Slightly lower nose bridge for narrow curve
-        (face_points[13][0], face_points[13][1] - 25),  # Mid cheek near nose
-    ]
+    # --- Dynamically calculate eye width and height ---
+    eye_width = np.linalg.norm(np.array(face_points[39]) - np.array(face_points[36]))  # Left eye width
+    eye_height = np.linalg.norm(np.array(face_points[37]) - np.array(face_points[41]))  # Left eye height
 
-    # Get points for nose bridge concealer (make it thinner)
-    nose_concealer = [
-        face_points[27],  # Top of the nose bridge
-        face_points[30],  # Bottom of the nose bridge
-    ]
+    # --- Scale feather size, extend_outer, and extend_lower dynamically ---
+    if feather_size is None:
+        feather_size = max(5, int(0.6 * eye_width))  # Feather 5% of eye width
+    if extend_outer is None:
+        extend_outer = int(0.7 * eye_width)  # Extend outer edge by 30% of eye width
+    if extend_lower is None:
+        extend_lower = int(1.5 * eye_height)  # Extend downward by 120% of eye height
 
-    # Create concealer mask
+    # --- Define indices for lower eyelid points ---
+    left_lower_lid = face_points[36:42]  # Lower part of left eye (landmarks 36-41)
+    right_lower_lid = face_points[42:48]  # Lower part of right eye (landmarks 42-47)
+
+    # --- Shift points downward and slightly outward for under-eye concealer ---
+    def shift_points(points, shift_y=7, shift_x=0):
+        return [(x + shift_x, y + shift_y) for (x, y) in points]
+
+    # Apply downward shift to simulate under-eye concealer
+    left_lower_lid_shifted = shift_points(left_lower_lid, shift_y=extend_lower, shift_x=-extend_outer)
+    right_lower_lid_shifted = shift_points(right_lower_lid, shift_y=extend_lower, shift_x=extend_outer)
+
+    # Extend outer corners to create a lifted effect
+    left_outer_corner = (
+        left_lower_lid[-1][0] + extend_outer,
+        left_lower_lid[-1][1] + extend_lower // 3,
+    )
+    right_outer_corner = (
+        right_lower_lid[0][0] - extend_outer,
+        right_lower_lid[0][1] + extend_lower // 3,
+    )
+
+    # Add the extended points to the shifted lower lid points
+    left_lower_lid_shifted.append(left_outer_corner)
+    right_lower_lid_shifted.append(right_outer_corner)
+
+    # --- Create convex hulls for smooth contour of under-eye concealer ---
+    left_concealer_hull = cv2.convexHull(np.array(left_lower_lid_shifted, dtype=np.int32))
+    right_concealer_hull = cv2.convexHull(np.array(right_lower_lid_shifted, dtype=np.int32))
+
+    # --- Create mask for under-eye concealer ---
     concealer_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
+    cv2.fillConvexPoly(concealer_mask, left_concealer_hull, 255)
+    cv2.fillConvexPoly(concealer_mask, right_concealer_hull, 255)
 
-    # Subtract the eye mask to avoid overlapping eyes
+    # --- Subtract the eye mask to avoid overlapping eyes ---
     if eye_mask is not None:
         concealer_mask = cv2.subtract(concealer_mask, eye_mask)
 
-    # Fill cheekbone highlights (narrower and sleeker)
-    cv2.fillConvexPoly(
-        concealer_mask, np.array(left_cheekbone_concealer, dtype=np.int32), 255
-    )
-    cv2.fillConvexPoly(
-        concealer_mask, np.array(right_cheekbone_concealer, dtype=np.int32), 255
-    )
-
-    # Draw a thinner line for nose highlight
-    cv2.line(
-        concealer_mask,
-        nose_concealer[0],
-        nose_concealer[1],
-        255,
-        thickness=2,  # Reduced thickness for a skinnier highlight
-        lineType=cv2.LINE_AA,
-    )
-
-    # Feather the mask for smooth blending
+    # --- Feather the concealer mask for smooth blending ---
     if feather_size > 0:
         if feather_size % 2 == 0:
             feather_size += 1  # Ensure feather size is odd
-        concealer_mask = cv2.GaussianBlur(
-            concealer_mask, (feather_size, feather_size), 0
-        )
+        concealer_mask = cv2.GaussianBlur(concealer_mask, (feather_size, feather_size), 0)
 
-    # Create highlighter overlay
+    # --- Create concealer overlay ---
     concealer_layer = np.full_like(image, concealer_color, dtype=np.uint8)
-    concealer_masked = cv2.bitwise_and(
-        concealer_layer, concealer_layer, mask=concealer_mask
-    )
+    concealer_masked = cv2.bitwise_and(concealer_layer, concealer_layer, mask=concealer_mask)
 
-    # Blend the highlighter with the original image
+    # --- Blend the concealer with the original image ---
     result = image.copy()
     for c in range(3):  # Blend each channel separately (B, G, R)
         result[:, :, c] = (
