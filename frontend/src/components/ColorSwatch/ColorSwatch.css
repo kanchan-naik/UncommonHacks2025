@@ -1,14 +1,6 @@
 .colorSwatch {
-  display: inline-block;
-  grid-area: 1 / 2;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-}
-
-.sephora.foundation.red {
-  background-color: red;
-}
-
-.light {
-  background-color: #d6dba2;
+  display: block;
+  aspect-ratio: 1 / 1;
+  width: 120px;
+  height: 120px;
 }

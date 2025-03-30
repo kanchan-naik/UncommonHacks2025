@@ -1,5 +1,11 @@
 import "./ColorSwatch.css";
 
 export default function ColorSwatch({ product }) {
-  return <div className={"colorSwatch " + product.class}></div>;
+  return (
+    <img
+      src="/light.png"
+      alt="light"
+      className={"colorSwatch " + product.class}
+    ></img>
+  );
 }

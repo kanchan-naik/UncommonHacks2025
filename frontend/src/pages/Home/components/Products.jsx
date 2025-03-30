@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Product from "models/Product";
 import "./Products.css";
 import ColorPalette, {
@@ -7,20 +7,47 @@ import ColorPalette, {
 import { MakeupRequest } from "../Home";
 
 const products = [
-  new Product("/lipstick_with_cap.png", "lipstick"),
-  new Product("/brush.png", "makeup brush"),
-  new Product("/foundation.png", "liquid foundation container"),
+  new Product("/lipstick_with_cap.png", "lipstick", "lipstick"),
+  new Product("/brush.png", "makeup brush", "eyeliner"),
+  new Product("/foundation.png", "liquid foundation container", "foundation"),
 ];
+
+const defaultRequest = {
+  foundation: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+  lipstick: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+  eyeliner: {
+    present: 0,
+    r: "#fff",
+    g: "#fff",
+    b: "#fff",
+  },
+};
 
 export default function Products({ onSubmit }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [closeButtonUrl, setCloseButtonUrl] = useState("/close_button.png");
-  const paletteRef = useRef(null);
+  const [makeupRequest, setMakeupRequest] = useState(defaultRequest);
+  const [selectedColor, setSelectedColor] = useState();
 
   const colorChanged = (newColor) => {
-    setSelectedColor(newColor);
-    onSubmit(new MakeupRequest(selectedProduct, newColor));
+    if (!selectedProduct) return;
+    let newRequest = makeupRequest;
+
+    newRequest[selectedProduct.title].present = 1;
+    newRequest[selectedProduct.title].r = newColor.r;
+    newRequest[selectedProduct.title].g = newColor.g;
+    newRequest[selectedProduct.title].b = newColor.b;
+    setMakeupRequest(newRequest);
+    onSubmit(newRequest);
   };
 
   const selectProduct = (product) => {
@@ -31,11 +58,6 @@ export default function Products({ onSubmit }) {
   };
 
   const closePalette = () => {
-    const palette = paletteRef.current;
-
-    if (!palette) return;
-
-    palette.classList.add("exit");
     setTimeout(() => {
       setSelectedProduct(null);
     }, 500);
@@ -69,21 +91,10 @@ export default function Products({ onSubmit }) {
       </div>
       {selectedProduct && (
         <>
-          <img
-            style={{
-              width: "50px",
-              aspectRatio: "1",
-            }}
-            src={closeButtonUrl}
-            onMouseEnter={() => setCloseButtonUrl("/close_button_hovered.png")}
-            onMouseLeave={() => setCloseButtonUrl("/close_button.png")}
-            onMouseDown={closePalette}
-            className="closeButton"
-          ></img>
           <ColorPalette
-            ref={paletteRef}
             type={PaletteType.FOUNDATION}
             setSelectedColor={colorChanged}
+            onClose={closePalette}
           />
         </>
       )}

@@ -1,6 +1,9 @@
 #colorPalette {
   position: absolute;
-
+  display: flex;
+  flex-direction: column;
+  padding: 20px 10px;
+  border-radius: 15px;
   right: 0;
   bottom: 0;
   animation: bottomRightSlideIn 300ms ease-in-out forwards;
@@ -8,6 +11,12 @@
 
 #colorPalette.exit {
   animation: bottomRightSlideOut 300ms ease-in-out forwards;
+}
+
+#colorSwatch {
+  width: 80px;
+  height: 50px;
+  border-radius: 9999px;
 }
 
 @keyframes bottomRightSlideIn {

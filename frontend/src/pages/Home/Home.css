@@ -10,12 +10,24 @@
   padding: 5px 20px;
 }
 
+#light-row-1,
+#light-row-3 {
+  justify-content: center;
+  max-width: 120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 #light-row-1 {
   grid-area: 2 / 1 / 8 / 2;
 }
 
 #light-row-2 {
   grid-area: 1 / 2 / 2 / 12;
+  max-height: 120px;
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 #light-row-3 {
