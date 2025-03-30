@@ -79,7 +79,7 @@ shadow_opacity = 0.2  # Change for intensity
 feather_size = 2  # Feather edges smoothly
 
 # Apply eye shadow
-eye_shadow_overlay = detect.apply_eye_shadow(foundation_overlay, face_points, shadow_color, alpha=shadow_opacity)
+eye_shadow_overlay = detect.apply_eye_shadow(foundation_overlay, face_points, shadow_color, alpha=shadow_opacity, eye_mask=eye_mask)
 plt.imsave(os.path.join(test_dir, "eye_shadow_overlay.png"), cv2.cvtColor(eye_shadow_overlay, cv2.COLOR_BGR2RGB))
 
 # --- Step 7: Apply lipstick with adjustable color and opacity ---
@@ -89,4 +89,22 @@ lipstick_overlay = detect.apply_lipstick(eye_shadow_overlay, face_points, lip_co
 plt.imsave(os.path.join(test_dir, "lipstick_overlay.png"), cv2.cvtColor(lipstick_overlay, cv2.COLOR_BGR2RGB))
 
 
+# --- Step 8: Apply blush to cheeks ---
+blush_color = (255, 102, 178)  # Pinkish blush color (BGR format)
+blush_opacity = 0.4  # Adjust opacity between 0 and 1
+feather_size = 40  # Feathering for smooth blending
+
+blush_overlay = detect.apply_blush(lipstick_overlay, face_points, blush_color, alpha=blush_opacity, feather_size=feather_size, eye_mask=eye_mask)
+plt.imsave(os.path.join(test_dir, "blush_overlay.png"), cv2.cvtColor(blush_overlay, cv2.COLOR_BGR2RGB))
+
 print("✅ All images processed and saved successfully!")
+
+# --- Step 9: Apply highlighter to cheekbones, nose, and cupid's bow ---
+concealer_color = (255, 255, 255)  # Shimmery white highlighter
+concealer_opacity = 0.2  # Subtle glow effect, can adjust
+feather_size = 15  # Feather for smooth blending
+
+concealer_overlay = detect.apply_concealer(
+    blush_overlay, face_points, concealer_color, alpha=concealer_opacity, feather_size=feather_size, eye_mask=eye_mask
+)
+plt.imsave(os.path.join(test_dir, "concealer_overlay.png"), cv2.cvtColor(concealer_overlay, cv2.COLOR_BGR2RGB))
