@@ -25,7 +25,7 @@ function FaceDetection({ userSubmitted, onScreenCapture, makeupImage }) {
     canvas.width = videoRect.width;
     canvas.height = videoRect.height;
     context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    const imageData = canvas.toDataURL("image/jpeg");
+    const imageData = canvas.toDataURL("image/png");
 
     onScreenCapture(imageData);
   }, [userSubmitted, onScreenCapture]);

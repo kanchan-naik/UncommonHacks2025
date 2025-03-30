@@ -10,6 +10,7 @@ import System.Process (readProcess)
 import Data.Text hiding (head)
 import Network.HTTP.Client
 import Network.Mime (defaultMimeLookup)
+import qualified Data.Text.Encoding as TE
 
 data Server = Server
 
@@ -28,11 +29,13 @@ postHomeR = do
     let filePath = "app/curr.png"
 
     -- get post request body
-    (_, body) <- runRequestBody
+    (params, body) <- runRequestBody
     rawBody <- fileSourceByteString (snd $ head body)
 
+    let imBytes = unpackBytes rawBody
+
     -- write it to a file
-    _ <- liftIO $ BL.writeFile filePath (BL.pack $ unpackBytes rawBody)
+    _ <- liftIO $ BL.writeFile filePath (BL.pack imBytes)
 
     -- run the processing script
     _ <- liftIO $ readProcess "python3" (scriptPath : [filePath]) ""

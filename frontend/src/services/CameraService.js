@@ -15,12 +15,22 @@ export default class CameraService {
   }
 
   static async saveImage(imageData) {
-    const response = await fetch("http://localhost:3000/save-image", {
+    var form = new FormData();
+    function dataURLtoBlob(dataURL) {
+      const parts = dataURL.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const b64 = atob(parts[1]);
+      let u8arr = new Uint8Array(b64.length);
+      for (let i = 0; i < b64.length; i++) {
+        u8arr[i] = b64.charCodeAt(i);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
+    form.append("image", dataURLtoBlob(imageData))
+    const response = await fetch("http://localhost:3000/", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ imageData }),
+      body: form,
+      mode: "no-cors"
     });
 
     const file = new Blob([JSON.stringify(imageData)], { type: "text/plain" });
