@@ -23,7 +23,7 @@ export default class CameraService {
       return new Blob([u8arr], { type: mime });
     }
     form.append("image", dataURLtoBlob(imageData));
-    form.append("bofa", JSON.stringify({ makeupRequest }));
+    form.append("bofa", JSON.stringify(makeupRequest));
     const response = await fetch("http://localhost:3000/", {
       method: "POST",
       body: form,

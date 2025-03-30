@@ -1,5 +1,7 @@
 import os
 import sys
 
+print("hello_world")
 assert os.path.exists(sys.argv[0])
-## do computation on image
+for p in sys.argv:
+  print(p, flush=True)
