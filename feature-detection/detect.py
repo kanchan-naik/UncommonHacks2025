@@ -96,7 +96,7 @@ def final_mask(skin_mask, texture_map):
 
     return refined_mask
 
-def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5, extend_outer=7, extend_upper=8):
+def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5, extend_outer=7, extend_upper=8, eye_mask=None):
     # Define indices for upper eyelid points
     left_upper_lid = face_points[36:42]  # Upper part of left eye (landmarks 36-41)
     right_upper_lid = face_points[42:48]  # Upper part of right eye (landmarks 42-47)
@@ -126,6 +126,10 @@ def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5
     cv2.fillConvexPoly(shadow_mask, left_shadow_hull, 255)
     cv2.fillConvexPoly(shadow_mask, right_shadow_hull, 255)
 
+    # Subtract the eye mask to avoid overlapping eyes
+    if eye_mask is not None:
+        shadow_mask = cv2.subtract(shadow_mask, eye_mask)
+
     # Feather the shadow edges to make it blend smoothly
     if feather_size > 0:
         # Make feather_size odd if it's not
@@ -144,6 +148,7 @@ def apply_eye_shadow(image, face_points, shadow_color, alpha=0.3, feather_size=5
             (shadow_masked[:, :, c] * (shadow_mask.astype(np.float32) / 255.0) * alpha)
             + image[:, :, c] * (1 - (shadow_mask.astype(np.float32) / 255.0) * alpha)
         ).astype(np.uint8)
+
 
     return result
 
@@ -298,4 +303,129 @@ def apply_lipstick(image, face_points, lip_color, alpha=0.4, feather_size=8):
 
     return result
 
+def apply_blush(image, face_points, blush_color=(255, 102, 178), alpha=0.3, feather_size=15, eye_mask=None):
+    # Get cheekbone landmarks for defining the curve
+    left_cheekbone_start = face_points[1]  # Near top of the ear
+    left_cheekbone_mid = face_points[3]  # Mid cheek for curve
+    left_cheekbone_end = (
+        (face_points[30][0] + face_points[2][0]) // 2,
+        (face_points[30][1] + face_points[2][1]) // 2,
+    )  # Mid-nose area
 
+    right_cheekbone_start = face_points[15]  # Near top of the ear
+    right_cheekbone_mid = face_points[13]  # Mid cheek for curve
+    right_cheekbone_end = (
+        (face_points[30][0] + face_points[12][0]) // 2,
+        (face_points[30][1] + face_points[12][1]) // 2,
+    )  # Mid-nose area
+
+    # Create curve points for each cheek
+    left_blush_curve = np.array(
+        [left_cheekbone_start, left_cheekbone_mid, left_cheekbone_end], dtype=np.int32
+    )
+    right_blush_curve = np.array(
+        [right_cheekbone_start, right_cheekbone_mid, right_cheekbone_end], dtype=np.int32
+    )
+
+    # Create a blush mask
+    blush_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
+
+    # Subtract the eye mask to avoid overlapping eyes
+    if eye_mask is not None:
+        blush_mask = cv2.subtract(blush_mask, eye_mask)
+
+    # Fill a polygon along the curve to define blush area
+    cv2.fillPoly(blush_mask, [left_blush_curve], 255)
+    cv2.fillPoly(blush_mask, [right_blush_curve], 255)
+
+    # Feather the blush mask for smooth blending
+    if feather_size > 0:
+        if feather_size % 2 == 0:
+            feather_size += 1  # Ensure feather size is odd
+        blush_mask = cv2.GaussianBlur(blush_mask, (feather_size, feather_size), 0)
+
+    # Create blush overlay with the specified color
+    blush_layer = np.full_like(image, blush_color, dtype=np.uint8)
+
+    # Apply the blush mask to the overlay
+    blush_masked = cv2.bitwise_and(blush_layer, blush_layer, mask=blush_mask)
+
+    # Blend the blush with the original image
+    result = image.copy()
+    for c in range(3):  # Blend each channel separately (B, G, R)
+        result[:, :, c] = (
+            (blush_masked[:, :, c] * (blush_mask.astype(np.float32) / 255.0) * alpha)
+            + image[:, :, c] * (1 - (blush_mask.astype(np.float32) / 255.0) * alpha)
+        ).astype(np.uint8)
+
+    return result
+
+def apply_concealer(
+    image, face_points, concealer_color=(255, 255, 255), alpha=0.5, feather_size=15, eye_mask = None
+):
+    # Get points for cheekbone concealer and extend upward
+    left_cheekbone_concealer = [
+        (face_points[2][0], face_points[2][1] - 27),  # Higher outer cheek
+        face_points[29],  # Slightly lower nose bridge for narrow curve
+        (face_points[3][0], face_points[3][1] - 25),  # Mid cheek near nose
+    ]
+    right_cheekbone_concealer = [
+        (face_points[14][0], face_points[14][1] - 27),  # Higher outer cheek
+        face_points[29],  # Slightly lower nose bridge for narrow curve
+        (face_points[13][0], face_points[13][1] - 25),  # Mid cheek near nose
+    ]
+
+    # Get points for nose bridge concealer (make it thinner)
+    nose_concealer = [
+        face_points[27],  # Top of the nose bridge
+        face_points[30],  # Bottom of the nose bridge
+    ]
+
+    # Create concealer mask
+    concealer_mask = np.zeros_like(image[:, :, 0], dtype=np.uint8)
+
+    # Subtract the eye mask to avoid overlapping eyes
+    if eye_mask is not None:
+        concealer_mask = cv2.subtract(concealer_mask, eye_mask)
+
+    # Fill cheekbone highlights (narrower and sleeker)
+    cv2.fillConvexPoly(
+        concealer_mask, np.array(left_cheekbone_concealer, dtype=np.int32), 255
+    )
+    cv2.fillConvexPoly(
+        concealer_mask, np.array(right_cheekbone_concealer, dtype=np.int32), 255
+    )
+
+    # Draw a thinner line for nose highlight
+    cv2.line(
+        concealer_mask,
+        nose_concealer[0],
+        nose_concealer[1],
+        255,
+        thickness=2,  # Reduced thickness for a skinnier highlight
+        lineType=cv2.LINE_AA,
+    )
+
+    # Feather the mask for smooth blending
+    if feather_size > 0:
+        if feather_size % 2 == 0:
+            feather_size += 1  # Ensure feather size is odd
+        concealer_mask = cv2.GaussianBlur(
+            concealer_mask, (feather_size, feather_size), 0
+        )
+
+    # Create highlighter overlay
+    concealer_layer = np.full_like(image, concealer_color, dtype=np.uint8)
+    concealer_masked = cv2.bitwise_and(
+        concealer_layer, concealer_layer, mask=concealer_mask
+    )
+
+    # Blend the highlighter with the original image
+    result = image.copy()
+    for c in range(3):  # Blend each channel separately (B, G, R)
+        result[:, :, c] = (
+            (concealer_masked[:, :, c] * (concealer_mask.astype(np.float32) / 255.0) * alpha)
+            + image[:, :, c] * (1 - (concealer_mask.astype(np.float32) / 255.0) * alpha)
+        ).astype(np.uint8)
+
+    return result
