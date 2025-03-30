@@ -1,0 +1,23 @@
+{
+    "foundation": {
+      "present": 1,
+      "color": "#F5E3D8"
+    },
+    "lipstick": {
+      "present": 1,
+      "color": "#B22222"
+    },
+    "eyeshadow": {
+      "present": 0,
+      "color": "#FFD700"
+    },
+    "blush": {
+      "present": 1,
+      "color": "#FF69B4"
+    },
+    "concealer": {
+      "present": 1,
+      "color": "#FFFACD"
+    }
+  }
+  

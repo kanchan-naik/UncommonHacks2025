@@ -2,12 +2,7 @@ export default class  CameraService {
   static async applyMakeup(imageData, makeupRequest) {
     const imageId = await CameraService.saveImage(imageData, makeupRequest);
     console.log("Saved image with imageId:", imageId);
-
-    const detectionData = await CameraService.detectFace(imageData, imageId);
-
-    if ((detectionData?.faces?.length ?? 0) > 0) {
-      return await CameraService.addMakeupToFace(detectionData, makeupRequest);
-    }
+    return imageId;
   }
 
   static async saveImage(imageData, makeupRequest) {
@@ -27,13 +22,16 @@ export default class  CameraService {
     const response = await fetch("http://localhost:3000/", {
       method: "POST",
       body: form,
-      mode: "no-cors",
     });
 
-    const imageId = await response.text();
+    const imageId = await response.blob();
     if (!imageId) {
       throw new Error("No imageId returned!");
     }
-    return imageId;
+
+    // Create a URL for the image
+    const imageUrl = URL.createObjectURL(imageId);
+
+    return imageUrl;
   }
 }

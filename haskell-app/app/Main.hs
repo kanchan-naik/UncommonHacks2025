@@ -47,6 +47,9 @@ getHomeR = redirect ("https://www.usenix.org/system/files/1401_08-12_mickens.pdf
 
 postHomeR :: Handler TypedContent
 postHomeR = do
+    setHeader "Access-Control-Allow-Origin" "*"
+    setHeader "Access-Control-Allow-Methods" "GET, POST, PUT, DELETE"
+    setHeader "Access-Control-Allow-Headers" "Content-Type, Authorization"
     cwd <- liftIO $ getCurrentDirectory
     _ <- liftIO $ putStrLn cwd
     let scriptPath = "/Users/kanchannaik/2024-2025/UncommonHacks2025/UncommonHacks2025/haskell-app/app/test.py"
@@ -71,9 +74,25 @@ postHomeR = do
     _ <- liftIO $ callProcess interpreter (scriptPath : args)
 
     let newfilePath = "test/final_makeup_result.png"
-    pngData <- liftIO $ BL.readFile newfilePath
-    let mimeType = defaultMimeLookup $ pack newfilePath
-    sendResponse (mimeType, toContent pngData)
+    -- Check if the file exists and is non-empty
+    fileExists <- liftIO $ doesFileExist newfilePath
+    if not fileExists
+        then do
+            _ <- liftIO $ putStrLn "Error: The final makeup result file does not exist."
+            sendResponse ("Error: File not found" :: Text)
+        else do
+            pngData <- liftIO $ BL.readFile newfilePath
+            _ <- liftIO $ putStrLn "Image read successfully"
+
+            -- Check if the PNG data is non-empty
+            if BL.null pngData
+                then do
+                    _ <- liftIO $ putStrLn "Error: The PNG data is empty."
+                    sendResponse ("Error: Empty image data" :: Text)
+                else do
+                    -- Get the MIME type of the image
+                    let mimeType = defaultMimeLookup $ pack newfilePath
+                    sendResponse (mimeType, toContent pngData)
 
 
 main :: IO ()
