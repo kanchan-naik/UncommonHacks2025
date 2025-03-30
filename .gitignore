@@ -53,6 +53,9 @@ wandb/
 
 #ignore image files
 *.jpeg
-*.png
 *.jpg
 *.JPG
+feature-detection/Data/*
+feature-detection/*.png
+feature-detection/test/*.png
+feature-detection/test/*/*.png
