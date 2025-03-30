@@ -15,13 +15,15 @@ export default class CameraService {
   }
 
   static async saveImage(imageData) {
-    const response = await fetch("http://localhost:4000/save-image", {
+    const response = await fetch("http://localhost:3000/save-image", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ imageData }),
     });
+
+    const file = new Blob([JSON.stringify(imageData)], { type: "text/plain" });
 
     const { imageId } = await response.json();
     if (!imageId) {
@@ -31,7 +33,7 @@ export default class CameraService {
   }
 
   static async detectFace(imageData, imageId) {
-    const response = await fetch("http://localhost:4000/detect-face", {
+    const response = await fetch("http://localhost:3000/detect-face", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,7 +49,7 @@ export default class CameraService {
     foundationColor,
     opacity,
   ) {
-    const response = await fetch("http://localhost:4000/apply-foundation", {
+    const response = await fetch("http://localhost:3000/apply-foundation", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
