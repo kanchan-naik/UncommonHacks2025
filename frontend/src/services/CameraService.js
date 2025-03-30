@@ -36,37 +36,4 @@ export default class CameraService {
     }
     return imageId;
   }
-
-  static async detectFace(imageData, imageId) {
-    const response = await fetch("http://localhost:3000/detect-face", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ imageUrl: imageData, imageId }),
-    });
-
-    return await response.json();
-  }
-
-  static async applyFoundation(
-    faceDetectionResponse,
-    foundationColor,
-    opacity,
-  ) {
-    const response = await fetch("http://localhost:3000/apply-foundation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        faceDetectionResponse,
-        foundationColor,
-        opacity,
-      }),
-    });
-
-    const imageBlob = await response.blob();
-    return URL.createObjectURL(imageBlob);
-  }
 }

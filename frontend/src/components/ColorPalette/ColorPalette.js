@@ -3,6 +3,10 @@ import "./ColorPalette.css";
 
 export const PaletteType = Object.freeze({
   FOUNDATION: "/foundation_palette.png",
+  LIPSTICK: "/lipstick_palette.png",
+  EYESHADOW: "/eyeshadow_palette.png",
+  BLUSH: "/blush_palette.png",
+  CONCEALER: "/concealer_palette.png",
 });
 
 export default function ColorPalette({ type, setSelectedColor, onClose }) {
@@ -11,6 +15,8 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
   const paletteRef = useRef(null);
   const [hoverColor, setHoverColor] = useState("transparent");
   const [closeButtonUrl, setCloseButtonUrl] = useState("/close_button.png");
+  const [didEnterColorFirstTime, setDidEnterColorFirstTime] = useState(false);
+  const [resetColorCallback, setResetColorCallback] = useState(() => {});
   const width = 400;
   const height = 400;
 
@@ -22,10 +28,36 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
     img.crossOrigin = "Anonymous";
     img.onload = () => {
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(img, 0, -100, width, height);
     };
     imgRef.current = img;
   }, [type]);
+
+  const replaceColor = (targetRgba, newRgba) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    const [tr, tg, tb] = targetRgba;
+    const [nr, ng, nb, na] = newRgba;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i],
+        g = data[i + 1],
+        b = data[i + 2];
+
+      // Use a tolerance if needed
+      if (r === tr && g === tg && b === tb) {
+        data[i] = nr;
+        data[i + 1] = ng;
+        data[i + 2] = nb;
+        data[i + 3] = na;
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  };
 
   const getCurrentPixel = (canvasRef, e) => {
     if (!canvasRef.current) return null;
@@ -41,9 +73,23 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
   const handleMouseMove = (e) => {
     const [r, g, b, a] = getCurrentPixel(canvasRef, e);
     if (!(r === g && g === b)) {
-      setHoverColor(`rgba(${r}, ${g}, ${b}, ${a / 255})`);
+      setDidEnterColorFirstTime(true);
+      const color = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+      setHoverColor(color);
+
+      if (!didEnterColorFirstTime) {
+        replaceColor([r, g, b, a], [r, g, b, a * 0.9]);
+        setResetColorCallback(() => {
+          return () => replaceColor([r, g, b, a * 0.9], [r, g, b, a]);
+        });
+      }
     } else {
+      if (hoverColor !== "transparent") {
+        resetColorCallback();
+      }
+
       setHoverColor("transparent");
+      setDidEnterColorFirstTime(false);
     }
   };
 
@@ -67,7 +113,9 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
     <div
       id="colorPalette"
       style={{
-        backgroundImage: "/foundation_palette.png",
+        backgroundImage: "url(/palette_bg.png)",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
       }}
       ref={paletteRef}
     >
@@ -75,7 +123,7 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
         style={{
           position: "absolute",
           top: "-10px",
-          left: "-10px",
+          right: "-10px",
           width: "50px",
           aspectRatio: "1",
         }}
@@ -86,24 +134,6 @@ export default function ColorPalette({ type, setSelectedColor, onClose }) {
         className="closeButton"
         alt="close button"
       ></img>
-      <div
-        style={{
-          display: "flex",
-          padding: "10px 20px",
-          justifyContent: "space-around",
-        }}
-      >
-        {hoverColor !== "transparent" && (
-          <div
-            id="currentSwatch"
-            style={{
-              backgroundColor: hoverColor,
-              border: "3px solid black",
-            }}
-          ></div>
-        )}
-        <div id="closeButton"></div>
-      </div>
       <canvas
         ref={canvasRef}
         width={width}

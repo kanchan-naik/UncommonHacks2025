@@ -2,43 +2,38 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  padding: 20px 10px;
-  border-radius: 15px;
-  right: 0;
-  bottom: 0;
-  animation: bottomRightSlideIn 300ms ease-in-out forwards;
+  left: 0;
+  top: 0;
+  animation: revealFromTop 300ms ease-in-out forwards;
 }
 
 #colorPalette.exit {
-  animation: bottomRightSlideOut 300ms ease-in-out forwards;
+  animation: hideIntoTop 300ms ease-in-out forwards;
 }
 
-#colorSwatch {
+#currentSwatch {
   width: 80px;
   height: 50px;
   border-radius: 9999px;
+  rotate: -40deg;
+  transform: translateX(-30);
 }
 
-@keyframes bottomRightSlideIn {
+@keyframes revealFromTop {
   from {
-    right: -100%;
-    bottom: -100%;
+    top: -100%;
+  }
+  to {
+    top: 0;
+  }
+}
+
+@keyframes hideIntoTop {
+  from {
+    top: 0;
   }
 
   to {
-    right: 0;
-    bottom: 0;
-  }
-}
-
-@keyframes bottomRightSlideOut {
-  from {
-    right: 0;
-    bottom: 0;
-  }
-
-  to {
-    right: -100%;
-    bottom: -100%;
+    top: -50%;
   }
 }
