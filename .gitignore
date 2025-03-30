@@ -50,3 +50,9 @@ backend/img/
 
 #Ignore Wandb
 wandb/
+
+#ignore image files
+*.jpeg
+*.png
+*.jpg
+*.JPG
