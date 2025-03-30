@@ -11,13 +11,6 @@
   width: 0; /* Enforces using the flex-grow */
 }
 
-#webcam #controls {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 #processed-face {
   flex-grow: 1;
   width: 0; /* Enforces using the flex-grow */

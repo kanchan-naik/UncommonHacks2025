@@ -16,3 +16,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+.closeButton {
+  background-image: "/close-button";
+}
+
+.closeButton:hover {
+  background-image: "/close-button-hovered";
+}
