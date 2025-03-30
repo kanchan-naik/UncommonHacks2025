@@ -1,17 +1,17 @@
 #webcam {
   display: inline;
   grid-area: 2 / 2 / 8 / 12;
-  overflow-y: hidden;
+  overflow: hidden;
   position: relative;
 }
 
 #webcam video {
-  width: 100%;
+  object-fit: cover;
+  flex-grow: 1;
+  width: 0; /* Enforces using the flex-grow */
 }
 
-#webcam #controls {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+#processed-face {
+  flex-grow: 1;
+  width: 0; /* Enforces using the flex-grow */
 }

@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Product from "models/Product";
 import "./Products.css";
+import ColorPalette, {
+  PaletteType,
+} from "components/ColorPalette/ColorPalette";
+import { MakeupRequest } from "../Home";
 
 const products = [
   new Product("/lipstick_with_cap.png", "lipstick"),
@@ -8,11 +12,17 @@ const products = [
   new Product("/foundation.png", "liquid foundation container"),
 ];
 
-export default function Products() {
+export default function Products({ onSubmit }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [closeButtonUrl, setCloseButtonUrl] = useState("/close_button.png");
+  const paletteRef = useRef(null);
 
-  // TODO: Turn these into model instances
-  //
+  const colorChanged = (newColor) => {
+    setSelectedColor(newColor);
+    onSubmit(new MakeupRequest(selectedProduct, newColor));
+  };
+
   const selectProduct = (product) => {
     setSelectedProduct(product);
     console.log(
@@ -20,30 +30,63 @@ export default function Products() {
     );
   };
 
+  const closePalette = () => {
+    const palette = paletteRef.current;
+
+    if (!palette) return;
+
+    palette.classList.add("exit");
+    setTimeout(() => {
+      setSelectedProduct(null);
+    }, 500);
+  };
+
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "80%",
-        overflowY: "hidden",
-      }}
-    >
-      {products.map((product) => {
-        return (
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "80%",
+          overflowY: "hidden",
+        }}
+      >
+        {products.map((product) => {
+          return (
+            <img
+              className={`product ${selectedProduct?.id === product.id ? "selected" : ""}`}
+              key={product.id}
+              src={product.imgSrc}
+              alt={product.alt}
+              onClick={() => selectProduct(product)}
+            />
+          );
+        })}
+      </div>
+      {selectedProduct && (
+        <>
           <img
-            className={`product ${selectedProduct?.id === product.id ? "selected" : ""}`}
-            key={product.id}
-            src={product.imgSrc}
-            alt={product.alt}
-            onClick={() => selectProduct(product)}
+            style={{
+              width: "50px",
+              aspectRatio: "1",
+            }}
+            src={closeButtonUrl}
+            onMouseEnter={() => setCloseButtonUrl("/close_button_hovered.png")}
+            onMouseLeave={() => setCloseButtonUrl("/close_button.png")}
+            onMouseDown={closePalette}
+            className="closeButton"
+          ></img>
+          <ColorPalette
+            ref={paletteRef}
+            type={PaletteType.FOUNDATION}
+            setSelectedColor={colorChanged}
           />
-        );
-      })}
-    </div>
+        </>
+      )}
+    </>
   );
 }
