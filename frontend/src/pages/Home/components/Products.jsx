@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Product from "models/Product";
 import "./Products.css";
 import ColorPalette, {
@@ -15,8 +15,6 @@ const products = [
 export default function Products({ onSubmit }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [closeButtonUrl, setCloseButtonUrl] = useState("/close_button.png");
-  const paletteRef = useRef(null);
 
   const colorChanged = (newColor) => {
     setSelectedColor(newColor);
@@ -31,11 +29,6 @@ export default function Products({ onSubmit }) {
   };
 
   const closePalette = () => {
-    const palette = paletteRef.current;
-
-    if (!palette) return;
-
-    palette.classList.add("exit");
     setTimeout(() => {
       setSelectedProduct(null);
     }, 500);
@@ -69,21 +62,10 @@ export default function Products({ onSubmit }) {
       </div>
       {selectedProduct && (
         <>
-          <img
-            style={{
-              width: "50px",
-              aspectRatio: "1",
-            }}
-            src={closeButtonUrl}
-            onMouseEnter={() => setCloseButtonUrl("/close_button_hovered.png")}
-            onMouseLeave={() => setCloseButtonUrl("/close_button.png")}
-            onMouseDown={closePalette}
-            className="closeButton"
-          ></img>
           <ColorPalette
-            ref={paletteRef}
             type={PaletteType.FOUNDATION}
             setSelectedColor={colorChanged}
+            onClose={closePalette}
           />
         </>
       )}

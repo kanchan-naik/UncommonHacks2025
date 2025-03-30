@@ -5,10 +5,12 @@ export const PaletteType = Object.freeze({
   FOUNDATION: "/foundation_palette.png",
 });
 
-export default function ColorPalette({ ref, type, setSelectedColor }) {
+export default function ColorPalette({ type, setSelectedColor, onClose }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
+  const paletteRef = useRef(null);
   const [hoverColor, setHoverColor] = useState("transparent");
+  const [closeButtonUrl, setCloseButtonUrl] = useState("/close_button.png");
   const width = 400;
   const height = 400;
 
@@ -52,15 +54,42 @@ export default function ColorPalette({ ref, type, setSelectedColor }) {
     }
   };
 
+  const closePalette = () => {
+    const palette = paletteRef.current;
+
+    if (!palette) return;
+
+    palette.classList.add("exit");
+    onClose();
+  };
+
   return (
-    <div
-      style={{
-        backgroundColor: "rgba(0, 0, 0, 0.2)",
-        padding: "20px 10px",
-      }}
-      id="colorPalette"
-      ref={ref}
-    >
+    <div id="colorPalette" ref={paletteRef}>
+      <img
+        style={{
+          position: "absolute",
+          top: "-5px",
+          left: "-5px",
+          width: "50px",
+          aspectRatio: "1",
+        }}
+        src={closeButtonUrl}
+        onMouseEnter={() => setCloseButtonUrl("/close_button_hovered.png")}
+        onMouseLeave={() => setCloseButtonUrl("/close_button.png")}
+        onMouseDown={closePalette}
+        className="closeButton"
+        alt="close button"
+      ></img>
+      <div
+        style={{
+          display: "flex",
+          padding: "10px 20px",
+          justifyContent: "space-around",
+        }}
+      >
+        <div id="currentSwatch"></div>
+        <div id="closeButton"></div>
+      </div>
       <canvas
         ref={canvasRef}
         width={width}
@@ -72,17 +101,6 @@ export default function ColorPalette({ ref, type, setSelectedColor }) {
           cursor: "crosshair",
         }}
       />
-      <div
-        style={{
-          marginTop: "10px",
-          padding: "10px",
-          backgroundColor: hoverColor,
-          color: "#000",
-          border: "1px solid #aaa",
-        }}
-      >
-        {hoverColor !== "transparent" ? `Hover Color: ${hoverColor}` : null}
-      </div>
     </div>
   );
 }
