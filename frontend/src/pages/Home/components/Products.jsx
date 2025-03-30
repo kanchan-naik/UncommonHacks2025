@@ -4,7 +4,7 @@ import "./Products.css";
 import ColorPalette, {
   PaletteType,
 } from "components/ColorPalette/ColorPalette";
-import { MakeupRequest } from "../Home";
+import rgbHex from "rgb-hex";
 
 const products = [
   new Product("/lipstick_with_cap.png", "lipstick", "lipstick"),
@@ -15,37 +15,32 @@ const products = [
 const defaultRequest = {
   foundation: {
     present: 0,
-    r: "#fff",
-    g: "#fff",
-    b: "#fff",
+    color: "#fff",
   },
   lipstick: {
     present: 0,
-    r: "#fff",
-    g: "#fff",
-    b: "#fff",
+    color: "#fff",
   },
   eyeliner: {
     present: 0,
-    r: "#fff",
-    g: "#fff",
-    b: "#fff",
+    color: "#fff",
   },
 };
 
 export default function Products({ onSubmit }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [makeupRequest, setMakeupRequest] = useState(defaultRequest);
-  const [selectedColor, setSelectedColor] = useState();
 
   const colorChanged = (newColor) => {
     if (!selectedProduct) return;
     let newRequest = makeupRequest;
 
     newRequest[selectedProduct.title].present = 1;
-    newRequest[selectedProduct.title].r = newColor.r;
-    newRequest[selectedProduct.title].g = newColor.g;
-    newRequest[selectedProduct.title].b = newColor.b;
+    newRequest[selectedProduct.title].color = rgbHex(
+      newColor.r,
+      newColor.g,
+      newColor.b,
+    );
     setMakeupRequest(newRequest);
     onSubmit(newRequest);
   };
